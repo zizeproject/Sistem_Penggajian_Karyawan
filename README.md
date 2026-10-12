@@ -2,6 +2,8 @@
 
 Sistem informasi penggajian karyawan berbasis web yang digunakan untuk mengelola data departemen, karyawan, dan penggajian secara terstruktur. Aplikasi ini dibuat dengan pendekatan front-end statis yang terhubung ke Supabase untuk penyimpanan data.
 
+Demo web: https://zizeproject.github.io/Sistem_Penggajian_Karyawan/dashboard.html
+
 ## Fitur utama
 
 - Manajemen data departemen
