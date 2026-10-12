@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard — STRADIVARIUS</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="dashboard">
+  <div id="notifications" class="toast-container" aria-live="polite"></div>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="dashboard.html"><span class="brand-mark">S</span><span class="brand-name">STRADIVARIUS<span class="brand-caption">PAYROLL MANAGEMENT</span></span></a>
+      <p class="nav-label">Menu utama</p>
+      <nav class="nav-list" aria-label="Navigasi utama">
+        <a class="nav-link active" href="dashboard.html"><span class="nav-icon">⌂</span>Dashboard</a>
+        <a class="nav-link" href="karyawan.html"><span class="nav-icon">♙</span>Data karyawan</a>
+        <a class="nav-link" href="penggajian.html" data-payroll-only><span class="nav-icon">▤</span>Penggajian</a>
+        <a class="nav-link" href="departemen.html"><span class="nav-icon">◫</span>Departemen</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="sidebar-user"><span class="avatar">S</span><span><strong class="user-name" data-user-name>Pengguna</strong><span class="user-role" data-user-role>Memuat...</span></span></div>
+        <a class="logout-button" href="login.html">⌂ &nbsp; Halaman awal</a>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar"><button id="menu-toggle" class="menu-toggle" aria-label="Buka menu">☰</button><div class="breadcrumb">Workspace &nbsp;/&nbsp; <strong>Dashboard</strong></div><div class="topbar-right"><span class="online-dot"></span><span class="role-label">Sistem Aktif</span></div></header>
+      <div class="content">
+        <div class="page-heading"><div><p class="eyebrow">Ringkasan perusahaan</p><h1>Dashboard</h1><p>Pantau informasi karyawan dan penggajian perusahaan.</p></div></div>
+        <div id="dashboard-content"></div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

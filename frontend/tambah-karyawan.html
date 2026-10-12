@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tambah Karyawan — STRADIVARIUS</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="employee-form">
+  <div id="notifications" class="toast-container" aria-live="polite"></div>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="dashboard.html"><span class="brand-mark">S</span><span class="brand-name">STRADIVARIUS<span class="brand-caption">PAYROLL MANAGEMENT</span></span></a>
+      <p class="nav-label">Menu utama</p><nav class="nav-list" aria-label="Navigasi utama">
+        <a class="nav-link" href="dashboard.html"><span class="nav-icon">⌂</span>Dashboard</a><a class="nav-link active" href="karyawan.html"><span class="nav-icon">♙</span>Data karyawan</a>
+        <a class="nav-link" href="penggajian.html" data-payroll-only><span class="nav-icon">▤</span>Penggajian</a><a class="nav-link" href="departemen.html"><span class="nav-icon">◫</span>Departemen</a>
+      </nav>
+      <div class="sidebar-bottom"><div class="sidebar-user"><span class="avatar">S</span><span><strong class="user-name" data-user-name>Pengguna</strong><span class="user-role" data-user-role>Mode lokal</span></span></div><a class="logout-button" href="login.html">⌂ &nbsp; Halaman awal</a></div>
+    </aside>
+    <main class="main">
+      <header class="topbar"><button id="menu-toggle" class="menu-toggle" aria-label="Buka menu">☰</button><div class="breadcrumb">Karyawan &nbsp;/&nbsp; <strong>Formulir</strong></div><div class="topbar-right"><span class="online-dot"></span><span class="role-label">Sistem Aktif</span></div></header>
+      <div class="content">
+        <div class="page-heading"><div><p class="eyebrow">Direktori perusahaan</p><h1 id="employee-form-title">Tambah karyawan</h1><p>Lengkapi informasi dasar dan penempatan karyawan.</p></div></div>
+        <div class="form-layout">
+          <section class="form-card">
+            <p>Kolom bertanda <span class="required">*</span> wajib diisi.</p>
+            <form id="employee-form">
+              <div class="form-grid">
+                <div class="field"><label for="nama">Nama lengkap <span class="required">*</span></label><input id="nama" name="nama" required maxlength="160" placeholder="Nama sesuai identitas"></div>
+                <div class="field"><label for="email">Email <span class="required">*</span></label><input id="email" name="email" type="email" required maxlength="254" placeholder="nama@perusahaan.id"></div>
+                <div class="field"><label for="no_hp">Nomor HP</label><input id="no_hp" name="no_hp" type="tel" maxlength="30" placeholder="+62 812..."></div>
+                <div class="field"><label for="jabatan">Jabatan <span class="required">*</span></label><input id="jabatan" name="jabatan" required maxlength="120" placeholder="Contoh: Staf Administrasi"></div>
+                <div class="field"><label for="gaji_pokok">Gaji pokok (Rp) <span class="required">*</span></label><input id="gaji_pokok" name="gaji_pokok" type="number" min="0" max="9999999999999.99" step="0.01" required placeholder="0"></div>
+                <div class="field"><label for="id_departemen">Departemen <span class="required">*</span></label><select id="id_departemen" name="id_departemen" required><option value="">Memuat departemen...</option></select></div>
+              </div>
+              <div class="form-actions"><a class="button button-secondary" href="karyawan.html">Batal</a><button class="button button-primary" type="submit">Simpan karyawan</button></div>
+            </form>
+          </section>
+          <aside class="aside-note"><h3>Informasi karyawan</h3><p>Pastikan alamat email sudah benar dan gaji pokok sesuai dengan data yang telah disetujui.</p><ul><li>Email tidak boleh digunakan oleh karyawan lain.</li><li>Penggajian akan menggunakan nilai gaji pokok ini saat catatan baru dibuat.</li></ul></aside>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
