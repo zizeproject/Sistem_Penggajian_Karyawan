@@ -3,23 +3,25 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Tambah Karyawan — STRADIVARIUS</title>
+  <title>Tambah Karyawan — VOGUEPAY</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
   <script src="app.js" defer></script>
 </head>
 <body data-page="employee-form">
   <div id="notifications" class="toast-container" aria-live="polite"></div>
   <div class="app-shell">
     <aside class="sidebar">
-      <a class="brand" href="dashboard.html"><span class="brand-mark">S</span><span class="brand-name">STRADIVARIUS<span class="brand-caption">PAYROLL MANAGEMENT</span></span></a>
+      <a class="brand" href="dashboard.html"><span class="brand-mark">V</span><span class="brand-name">VOGUEPAY<span class="brand-caption">PAYROLL MANAGEMENT</span></span></a>
       <p class="nav-label">Menu utama</p><nav class="nav-list" aria-label="Navigasi utama">
         <a class="nav-link" href="dashboard.html"><span class="nav-icon">⌂</span>Dashboard</a><a class="nav-link active" href="karyawan.html"><span class="nav-icon">♙</span>Data karyawan</a>
         <a class="nav-link" href="penggajian.html" data-payroll-only><span class="nav-icon">▤</span>Penggajian</a><a class="nav-link" href="departemen.html"><span class="nav-icon">◫</span>Departemen</a>
       </nav>
-      <div class="sidebar-bottom"><div class="sidebar-user"><span class="avatar">S</span><span><strong class="user-name" data-user-name>Pengguna</strong><span class="user-role" data-user-role>Mode lokal</span></span></div><a class="logout-button" href="login.html">⌂ &nbsp; Halaman awal</a></div>
+      <div class="sidebar-bottom"><div class="sidebar-user"><span class="avatar">S</span><span><strong class="user-name" data-user-name>Administrator</strong><span class="user-role" data-user-role>Payroll Management</span></span></div><a class="logout-button" href="index.html">Halaman awal</a></div>
     </aside>
     <main class="main">
-      <header class="topbar"><button id="menu-toggle" class="menu-toggle" aria-label="Buka menu">☰</button><div class="breadcrumb">Karyawan &nbsp;/&nbsp; <strong>Formulir</strong></div><div class="topbar-right"><span class="online-dot"></span><span class="role-label">Sistem Aktif</span></div></header>
+      <header class="topbar"><button id="menu-toggle" class="menu-toggle" aria-label="Buka menu">☰</button><div class="breadcrumb">Karyawan &nbsp;/&nbsp; <strong>Formulir</strong></div><div class="topbar-right"><span class="online-dot"></span><span class="role-label">Supabase · akses publik</span></div></header>
       <div class="content">
         <div class="page-heading"><div><p class="eyebrow">Direktori perusahaan</p><h1 id="employee-form-title">Tambah karyawan</h1><p>Lengkapi informasi dasar dan penempatan karyawan.</p></div></div>
         <div class="form-layout">

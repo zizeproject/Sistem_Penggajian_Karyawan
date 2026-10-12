@@ -154,6 +154,8 @@ input::placeholder, textarea::placeholder { color: #a5abb1; }
 .login-security { display: flex; gap: 9px; align-items: center; margin-top: 20px; color: #858e98; font-size: 10px; }
 .login-security span { color: var(--green); font-size: 15px; }
 .home-redirect { padding: 30px; text-align: center; }
+.home-cta { min-height: 48px; padding: 0 22px; }
+.home-cta span { font-size: 17px; }
 
 @media (max-width: 1050px) {
   .sidebar { width: 220px; }
@@ -188,6 +190,11 @@ input::placeholder, textarea::placeholder { color: #a5abb1; }
   .login-page { grid-template-columns: 1fr; }
   .login-visual { display: none; }
   .login-side { min-height: 100vh; padding: 32px 22px; }
+  .home-page .login-page { grid-template-columns: 1fr; }
+  .home-page .login-visual { display: flex; min-height: 48vh; padding: 25px 8%; }
+  .home-page .login-copy { padding: 28px 0 12px; }
+  .home-page .login-copy h1 { font-size: clamp(34px, 9vw, 48px); }
+  .home-page .login-side { min-height: 52vh; padding: 32px 22px; }
 }
 @media (max-width: 420px) {
   .topbar-right .online-dot, .topbar-right .role-label { display: none; }

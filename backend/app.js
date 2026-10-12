@@ -1,10 +1,8 @@
 /*
- * STRADIVARIUS backend business rules.
+ * VOGUEPAY backend business rules.
  *
- * This file deliberately does not start a server, open a port, connect to
- * Supabase, or implement authentication. The application is offline/local
- * browser software by request. These pure functions are kept here as the
- * backend-rule reference; frontend/app.js performs the local browser CRUD.
+ * These pure functions define payroll validation rules. The browser client
+ * accesses the public Supabase tables from frontend/app.js.
  */
 
 (function exposePayrollRules(root) {
@@ -73,7 +71,7 @@
     };
   }
 
-  root.StradivariusBackendRules = Object.freeze({
+  root.VoguepayBackendRules = Object.freeze({
     validateEmployee,
     validateDepartment,
     calculatePayroll,

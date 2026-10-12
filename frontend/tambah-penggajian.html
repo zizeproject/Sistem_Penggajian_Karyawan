@@ -3,28 +3,30 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Tambah Penggajian — STRADIVARIUS</title>
+  <title>Tambah Penggajian — VOGUEPAY</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
   <script src="app.js" defer></script>
 </head>
 <body data-page="payroll-form">
   <div id="notifications" class="toast-container" aria-live="polite"></div>
   <div class="app-shell">
     <aside class="sidebar">
-      <a class="brand" href="dashboard.html"><span class="brand-mark">S</span><span class="brand-name">STRADIVARIUS<span class="brand-caption">PAYROLL MANAGEMENT</span></span></a>
+      <a class="brand" href="dashboard.html"><span class="brand-mark">V</span><span class="brand-name">VOGUEPAY<span class="brand-caption">PAYROLL MANAGEMENT</span></span></a>
       <p class="nav-label">Menu utama</p><nav class="nav-list" aria-label="Navigasi utama">
         <a class="nav-link" href="dashboard.html"><span class="nav-icon">⌂</span>Dashboard</a><a class="nav-link" href="karyawan.html"><span class="nav-icon">♙</span>Data karyawan</a>
         <a class="nav-link active" href="penggajian.html" data-payroll-only><span class="nav-icon">▤</span>Penggajian</a><a class="nav-link" href="departemen.html"><span class="nav-icon">◫</span>Departemen</a>
       </nav>
-      <div class="sidebar-bottom"><div class="sidebar-user"><span class="avatar">S</span><span><strong class="user-name" data-user-name>Pengguna</strong><span class="user-role" data-user-role>Mode lokal</span></span></div><a class="logout-button" href="login.html">⌂ &nbsp; Halaman awal</a></div>
+      <div class="sidebar-bottom"><div class="sidebar-user"><span class="avatar">S</span><span><strong class="user-name" data-user-name>Administrator</strong><span class="user-role" data-user-role>Payroll Management</span></span></div><a class="logout-button" href="index.html">Halaman awal</a></div>
     </aside>
     <main class="main">
-      <header class="topbar"><button id="menu-toggle" class="menu-toggle" aria-label="Buka menu">☰</button><div class="breadcrumb">Penggajian &nbsp;/&nbsp; <strong>Formulir</strong></div><div class="topbar-right"><span class="online-dot"></span><span class="role-label">Sistem Aktif</span></div></header>
+      <header class="topbar"><button id="menu-toggle" class="menu-toggle" aria-label="Buka menu">☰</button><div class="breadcrumb">Penggajian &nbsp;/&nbsp; <strong>Formulir</strong></div><div class="topbar-right"><span class="online-dot"></span><span class="role-label">Supabase · akses publik</span></div></header>
       <div class="content">
         <div class="page-heading"><div><p class="eyebrow">Kompensasi karyawan</p><h1 id="payroll-form-title">Tambah penggajian</h1><p>Masukkan periode, tunjangan, dan potongan untuk karyawan.</p></div></div>
         <div class="form-layout">
           <section class="form-card">
-            <p>Gaji pokok diambil dari data karyawan dan total dihitung otomatis di browser ini.</p>
+            <p>Gaji pokok diambil dari data karyawan dan total dihitung otomatis sebelum disimpan di Supabase.</p>
             <form id="payroll-form">
               <div class="form-grid">
                 <div class="field full"><label for="id_karyawan">Karyawan <span class="required">*</span></label><select id="id_karyawan" name="id_karyawan" required><option value="">Memuat karyawan...</option></select></div>
@@ -35,7 +37,7 @@
               <div class="form-actions"><a class="button button-secondary" href="penggajian.html">Batal</a><button class="button button-primary" type="submit">Simpan penggajian</button></div>
             </form>
           </section>
-          <aside class="aside-note"><h3>Perhitungan otomatis</h3><p>Nilai akhir dihitung di browser ini dan disimpan dalam localStorage pada perangkat Anda.</p><ul><li>Total = gaji pokok + tunjangan − potongan.</li><li>Satu karyawan hanya memiliki satu catatan per periode.</li><li>Nominal tidak boleh negatif.</li></ul></aside>
+          <aside class="aside-note"><h3>Perhitungan otomatis</h3><p>Nilai akhir dihitung otomatis dan disimpan terpusat di Supabase.</p><ul><li>Total = gaji pokok + tunjangan − potongan.</li><li>Satu karyawan hanya memiliki satu catatan per periode.</li><li>Nominal tidak boleh negatif.</li></ul></aside>
         </div>
       </div>
     </main>

@@ -1,52 +1,83 @@
-const STORE_KEY = "stradivarius-local-data-v1";
+const supabaseClient = window.supabaseClient;
 const page = document.body.dataset.page;
 const rupiah = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
 const emptyData = () => ({ departments: [], employees: [], payroll: [] });
-
-function seedData() {
-  const departments = [
-    { id: "c8100000-0000-4000-8000-000000000001", nama_departemen: "Keuangan", deskripsi: "Pengelolaan keuangan dan administrasi perusahaan.", created_at: new Date().toISOString() },
-    { id: "c8100000-0000-4000-8000-000000000002", nama_departemen: "Sumber Daya Manusia", deskripsi: "Pengelolaan karyawan dan pengembangan organisasi.", created_at: new Date().toISOString() },
-    { id: "c8100000-0000-4000-8000-000000000003", nama_departemen: "Teknologi Informasi", deskripsi: "Dukungan sistem dan infrastruktur teknologi.", created_at: new Date().toISOString() },
-  ];
-  const employees = [
-    { id: "c8200000-0000-4000-8000-000000000001", nama: "Alya Putri", email: "alya.putri@example.test", no_hp: "0812-5550-1001", jabatan: "Staf Akuntansi", gaji_pokok: 6500000, id_departemen: departments[0].id, created_at: new Date().toISOString() },
-    { id: "c8200000-0000-4000-8000-000000000002", nama: "Bima Pratama", email: "bima.pratama@example.test", no_hp: "0812-5550-1002", jabatan: "Spesialis Rekrutmen", gaji_pokok: 7200000, id_departemen: departments[1].id, created_at: new Date().toISOString() },
-    { id: "c8200000-0000-4000-8000-000000000003", nama: "Citra Maharani", email: "citra.maharani@example.test", no_hp: "0812-5550-1003", jabatan: "Pengembang Perangkat Lunak", gaji_pokok: 9500000, id_departemen: departments[2].id, created_at: new Date().toISOString() },
-  ];
-  const now = new Date();
-  const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  const createdAt = now.toISOString();
-  const payroll = [
-    { id: "c8300000-0000-4000-8000-000000000001", id_karyawan: employees[0].id, nama_karyawan: employees[0].nama, jabatan: employees[0].jabatan, periode: period, gaji_pokok: 6500000, tunjangan: 500000, potongan: 150000, total_gaji: 6850000, created_at: createdAt },
-    { id: "c8300000-0000-4000-8000-000000000002", id_karyawan: employees[1].id, nama_karyawan: employees[1].nama, jabatan: employees[1].jabatan, periode: period, gaji_pokok: 7200000, tunjangan: 750000, potongan: 200000, total_gaji: 7750000, created_at: createdAt },
-    { id: "c8300000-0000-4000-8000-000000000003", id_karyawan: employees[2].id, nama_karyawan: employees[2].nama, jabatan: employees[2].jabatan, periode: period, gaji_pokok: 9500000, tunjangan: 1000000, potongan: 350000, total_gaji: 10150000, created_at: createdAt },
-  ];
-  return { departments, employees, payroll };
-}
-
-function initializeSeedData() {
-  if (localStorage.getItem(STORE_KEY) === null) writeData(seedData());
-}
+let currentData = emptyData();
+const accessMode = "public";
 
 function readData() {
-  const raw = localStorage.getItem(STORE_KEY);
-  if (!raw) return emptyData();
-  const data = JSON.parse(raw);
-  if (!data || !["departments", "employees", "payroll"].every((key) => Array.isArray(data[key]))) {
-    throw new Error("Data browser tidak memiliki format STRADIVARIUS yang valid.");
-  }
-  return data;
+  return {
+    departments: currentData.departments.map((item) => ({ ...item })),
+    employees: currentData.employees.map((item) => ({ ...item })),
+    payroll: currentData.payroll.map((item) => ({ ...item })),
+  };
 }
 
-function writeData(data) {
-  try {
-    localStorage.setItem(STORE_KEY, JSON.stringify(data));
-  } catch (error) {
-    throw new Error(error.name === "QuotaExceededError"
-      ? "Penyimpanan browser penuh."
-      : `Tidak dapat menyimpan data browser: ${error.message}`);
-  }
+function throwIfError(error) {
+  if (error) throw new Error(error.message || "Permintaan Supabase gagal.");
+}
+
+async function loadRemoteData() {
+  const [departments, employees, payroll] = await Promise.all([
+    supabaseClient.from("departemen").select("*").order("nama_departemen"),
+    supabaseClient.from("karyawan").select("*").order("nama"),
+    supabaseClient.from("penggajian").select("*, karyawan(nama,jabatan)").order("periode", { ascending: false }),
+  ]);
+  [departments, employees, payroll].forEach((result) => throwIfError(result.error));
+  currentData = {
+    departments: departments.data.map((item) => ({ ...item, id: item.id_departemen })),
+    employees: employees.data.map((item) => ({ ...item, id: item.id_karyawan })),
+    payroll: payroll.data.map((item) => ({
+      ...item,
+      id: item.id_penggajian,
+      periode: item.periode.slice(0, 7),
+      nama_karyawan: item.karyawan?.nama ?? "Karyawan tidak ditemukan",
+      jabatan: item.karyawan?.jabatan ?? "",
+    })),
+  };
+}
+
+function changedItems(previous, next) {
+  const oldItems = new Map(previous.map((item) => [item.id, item]));
+  const newItems = new Map(next.map((item) => [item.id, item]));
+  return {
+    removed: [...oldItems.keys()].filter((itemId) => !newItems.has(itemId)),
+    changed: next.filter((item) => JSON.stringify(oldItems.get(item.id)) !== JSON.stringify(item)),
+  };
+}
+
+async function persistData(previous, next) {
+  const departments = changedItems(previous.departments, next.departments);
+  const employees = changedItems(previous.employees, next.employees);
+  const payroll = changedItems(previous.payroll, next.payroll);
+  const remove = async (table, column, ids) => {
+    if (!ids.length) return;
+    const { error } = await supabaseClient.from(table).delete().in(column, ids);
+    throwIfError(error);
+  };
+  const upsert = async (table, rows) => {
+    if (!rows.length) return;
+    const { error } = await supabaseClient.from(table).upsert(rows);
+    throwIfError(error);
+  };
+  const removedEmployeePayrollIds = previous.payroll
+    .filter((item) => employees.removed.includes(item.id_karyawan))
+    .map((item) => item.id);
+  await remove("penggajian", "id_penggajian", [...new Set([...payroll.removed, ...removedEmployeePayrollIds])]);
+  await remove("karyawan", "id_karyawan", employees.removed);
+  await remove("departemen", "id_departemen", departments.removed);
+  await upsert("departemen", departments.changed.map(({ id, ...item }) => ({ ...item, id_departemen: id })));
+  await upsert("karyawan", employees.changed.map(({ id, ...item }) => ({ ...item, id_karyawan: id })));
+  await upsert("penggajian", payroll.changed.map(({ id, nama_karyawan, jabatan, karyawan, total_gaji, ...item }) => ({
+    ...item,
+    id_penggajian: id,
+    periode: `${item.periode}-01`,
+  })));
+}
+
+async function writeData(data) {
+  await persistData(currentData, data);
+  currentData = data;
 }
 
 function id() {
@@ -75,6 +106,7 @@ function toast(message, error = false) {
 function setIdentity() {
   document.querySelectorAll("[data-user-name]").forEach((node) => node.textContent = "Administrator");
   document.querySelectorAll("[data-user-role]").forEach((node) => node.textContent = "Payroll Management");
+  document.querySelectorAll("[data-admin-only], [data-payroll-only]").forEach((node) => node.hidden = false);
 }
 
 function shortDate(value) {
@@ -100,13 +132,14 @@ function loadDashboard() {
     const latest = [...data.payroll].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 5);
     document.querySelector("#dashboard-content").innerHTML = `
       <section class="stats-grid">
-        <article class="stat-card"><span class="stat-icon">♙</span><div><p>Total karyawan</p><strong>${data.employees.length}</strong><small>Tersimpan di browser ini</small></div></article>
-        <article class="stat-card"><span class="stat-icon gold">Rp</span><div><p>Total gaji bulan ini</p><strong>${money(currentPayroll.reduce((sum, item) => sum + item.total_gaji, 0))}</strong><small>Periode berjalan</small></div></article>
+        <article class="stat-card"><span class="stat-icon">♙</span><div><p>Total karyawan</p><strong>${data.employees.length}</strong><small>Tersimpan di Supabase</small></div></article>
+        ${accessMode !== "viewer" ? `<article class="stat-card"><span class="stat-icon gold">Rp</span><div><p>Total gaji bulan ini</p><strong>${money(currentPayroll.reduce((sum, item) => sum + item.total_gaji, 0))}</strong><small>Periode berjalan</small></div></article>` : ""}
         <article class="stat-card"><span class="stat-icon">▤</span><div><p>Departemen</p><strong>${data.departments.length}</strong><small>Unit organisasi</small></div></article>
       </section>
-      <section class="panel"><div class="panel-heading"><div><h2>Penggajian terbaru</h2><p>Data lokal pada browser ini</p></div><a class="text-link" href="penggajian.html">Lihat semua →</a></div>
+      ${accessMode !== "viewer" ? `<section class="panel"><div class="panel-heading"><div><h2>Penggajian terbaru</h2><p>Data tersimpan di Supabase</p></div><a class="text-link" href="penggajian.html">Lihat semua →</a></div>
       ${latest.length ? `<div class="table-wrap"><table><thead><tr><th>Karyawan</th><th>Periode</th><th>Total gaji</th><th>Tanggal dicatat</th></tr></thead><tbody>${latest.map((item) => `<tr><td><strong>${safe(item.nama_karyawan)}</strong></td><td>${periodName(item.periode)}</td><td>${money(item.total_gaji)}</td><td>${shortDate(item.created_at)}</td></tr>`).join("")}</tbody></table></div>` : '<p class="empty-state">Belum ada catatan penggajian.</p>'}
-      </section>`;
+      </section>` : ""}
+      `;
   } catch (error) {
     document.querySelector("#dashboard-content").innerHTML = `<section class="panel error-cell">${safe(error.message)}</section>`;
   }
@@ -126,21 +159,22 @@ function loadEmployees() {
       body.innerHTML = employees.length ? employees.map((employee) => {
         const dept = data.departments.find((item) => item.id === employee.id_departemen);
         return `<tr><td><strong>${safe(employee.nama)}</strong><span class="sub-cell">${safe(employee.email)}</span></td><td>${safe(employee.jabatan)}</td>
-          <td>${safe(dept?.nama_departemen ?? "—")}</td><td>${safe(employee.no_hp || "—")}</td><td>${money(employee.gaji_pokok)}</td>
-          <td class="actions"><a class="icon-button" href="tambah-karyawan.html?id=${encodeURIComponent(employee.id)}" title="Edit">↗</a>
-          <button class="icon-button danger" data-remove-employee="${safe(employee.id)}" title="Hapus">×</button></td></tr>`;
+          <td>${safe(dept?.nama_departemen ?? "—")}</td><td>${safe(employee.no_hp || "—")}</td>
+          ${accessMode !== "viewer" ? `<td>${money(employee.gaji_pokok)}</td>` : ""}
+          ${accessMode === "public" ? `<td class="actions"><a class="icon-button" href="tambah-karyawan.html?id=${encodeURIComponent(employee.id)}" title="Edit">↗</a>
+          <button class="icon-button danger" data-remove-employee="${safe(employee.id)}" title="Hapus">×</button></td>` : ""}</tr>`;
       }).join("") : '<tr><td colspan="6"><p class="empty-state">Tidak ada data karyawan.</p></td></tr>';
     } catch (error) { errorRow("#employee-rows", 6, error); }
   };
   search.addEventListener("input", render);
-  body.addEventListener("click", (event) => {
+  body.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-remove-employee]");
-    if (!button || !confirm("Hapus karyawan dan catatan penggajian terkait dari browser ini?")) return;
+    if (!button || !confirm("Hapus karyawan dan catatan penggajian terkait dari Supabase?")) return;
     try {
       const data = readData();
       data.employees = data.employees.filter((employee) => employee.id !== button.dataset.removeEmployee);
       data.payroll = data.payroll.filter((item) => item.id_karyawan !== button.dataset.removeEmployee);
-      writeData(data);
+      await writeData(data);
       toast("Data karyawan dihapus.");
       render();
     } catch (error) { toast(error.message, true); }
@@ -165,7 +199,7 @@ function loadEmployeeForm() {
       });
     }
   } catch (error) { toast(error.message, true); }
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const button = form.querySelector("[type=submit]");
     button.disabled = true;
@@ -189,8 +223,8 @@ function loadEmployeeForm() {
       data.employees = editId
         ? data.employees.map((item) => item.id === editId ? employee : item)
         : [...data.employees, employee];
-      writeData(data);
-      toast("Data karyawan berhasil disimpan di browser ini.");
+      await writeData(data);
+      toast("Data karyawan berhasil disimpan di Supabase.");
       setTimeout(() => location.assign("karyawan.html"), 350);
     } catch (error) {
       toast(error.message, true);
@@ -215,12 +249,12 @@ function loadDepartments() {
       body.innerHTML = data.departments.length ? data.departments.map((dept) => `<tr>
         <td><strong>${safe(dept.nama_departemen)}</strong></td><td>${safe(dept.deskripsi || "—")}</td>
         <td>${data.employees.filter((employee) => employee.id_departemen === dept.id).length}</td>
-        <td class="actions"><button class="icon-button" data-edit-dept="${safe(dept.id)}" title="Edit">↗</button>
-        <button class="icon-button danger" data-remove-dept="${safe(dept.id)}" title="Hapus">×</button></td></tr>`).join("")
+        ${accessMode === "public" ? `<td class="actions"><button class="icon-button" data-edit-dept="${safe(dept.id)}" title="Edit">↗</button>
+        <button class="icon-button danger" data-remove-dept="${safe(dept.id)}" title="Hapus">×</button></td>` : ""}</tr>`).join("")
         : '<tr><td colspan="4"><p class="empty-state">Belum ada departemen.</p></td></tr>';
     } catch (error) { errorRow("#department-rows", 4, error); }
   };
-  body.addEventListener("click", (event) => {
+  body.addEventListener("click", async (event) => {
     const edit = event.target.closest("[data-edit-dept]");
     const remove = event.target.closest("[data-remove-dept]");
     try {
@@ -241,14 +275,14 @@ function loadDepartments() {
         }
         if (!confirm("Hapus departemen ini?")) return;
         data.departments = data.departments.filter((item) => item.id !== remove.dataset.removeDept);
-        writeData(data);
+        await writeData(data);
         toast("Departemen dihapus.");
         render();
       }
     } catch (error) { toast(error.message, true); }
   });
   document.querySelector("#department-cancel").addEventListener("click", () => resetDepartmentForm(form));
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const button = document.querySelector("#department-save");
     const editId = form.elements.id_departemen.value;
@@ -269,7 +303,7 @@ function loadDepartments() {
       data.departments = editId
         ? data.departments.map((item) => item.id === editId ? dept : item)
         : [...data.departments, dept];
-      writeData(data);
+      await writeData(data);
       toast("Departemen berhasil disimpan.");
       resetDepartmentForm(form);
       render();
@@ -292,19 +326,19 @@ function loadPayroll() {
         <td><strong>${safe(record.nama_karyawan)}</strong><span class="sub-cell">${safe(record.jabatan)}</span></td>
         <td>${periodName(record.periode)}</td><td>${money(record.gaji_pokok)}</td><td>${money(record.tunjangan)}</td>
         <td>${money(record.potongan)}</td><td class="total-amount">${money(record.total_gaji)}</td>
-        <td class="actions"><a class="icon-button" href="tambah-penggajian.html?id=${encodeURIComponent(record.id)}" title="Edit">↗</a>
+        <td class="actions" data-payroll-only><a class="icon-button" href="tambah-penggajian.html?id=${encodeURIComponent(record.id)}" title="Edit">↗</a>
         <button class="icon-button danger" data-remove-payroll="${safe(record.id)}" title="Hapus">×</button></td></tr>`).join("")
         : '<tr><td colspan="7"><p class="empty-state">Belum ada penggajian pada periode ini.</p></td></tr>';
     } catch (error) { errorRow("#payroll-rows", 7, error); }
   };
   filter.addEventListener("change", render);
-  body.addEventListener("click", (event) => {
+  body.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-remove-payroll]");
     if (!button || !confirm("Hapus catatan penggajian ini?")) return;
     try {
       const data = readData();
       data.payroll = data.payroll.filter((item) => item.id !== button.dataset.removePayroll);
-      writeData(data);
+      await writeData(data);
       toast("Catatan penggajian dihapus.");
       render();
     } catch (error) { toast(error.message, true); }
@@ -333,7 +367,7 @@ function loadPayrollForm() {
       form.elements.periode.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     }
   } catch (error) { toast(error.message, true); }
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const button = form.querySelector("[type=submit]");
     button.disabled = true;
@@ -367,8 +401,8 @@ function loadPayrollForm() {
       data.payroll = editId
         ? data.payroll.map((item) => item.id === editId ? record : item)
         : [...data.payroll, record];
-      writeData(data);
-      toast("Penggajian berhasil disimpan di browser ini.");
+      await writeData(data);
+      toast("Penggajian berhasil disimpan di Supabase.");
       setTimeout(() => location.assign("penggajian.html"), 350);
     } catch (error) {
       toast(error.message, true);
@@ -377,15 +411,15 @@ function loadPayrollForm() {
   });
 }
 
-function initialize() {
-  try {
-    initializeSeedData();
-  } catch (error) {
-    toast(`Data contoh tidak dapat dimuat: ${error.message}`, true);
-  }
-  setIdentity();
+async function initialize() {
   document.querySelector("#menu-toggle")?.addEventListener("click", () => document.querySelector(".sidebar")?.classList.toggle("sidebar-open"));
-  if (page === "login") return;
+  if (page === "login") {
+    location.replace("dashboard.html");
+    return;
+  }
+
+  await loadRemoteData();
+  setIdentity();
   if (page === "dashboard") loadDashboard();
   if (page === "employees") loadEmployees();
   if (page === "employee-form") loadEmployeeForm();
@@ -394,4 +428,8 @@ function initialize() {
   if (page === "payroll-form") loadPayrollForm();
 }
 
-initialize();
+try {
+  initialize().catch((error) => toast(`Aplikasi tidak dapat dimuat: ${error.message}`, true));
+} catch (error) {
+  toast(`Aplikasi tidak dapat dimuat: ${error.message}`, true);
+}

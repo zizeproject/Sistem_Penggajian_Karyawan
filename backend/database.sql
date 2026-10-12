@@ -1,8 +1,28 @@
--- STRADIVARIUS PostgreSQL schema/reference only.
--- This schema is not connected to the current browser-local application.
--- There is no Auth provider, server, or public data policy in this setup.
--- RLS is enabled without policies: browser users cannot read payroll.
--- Do not expose or grant anon access to these tables.
+-- VOGUEPAY public Supabase schema.
+-- Run in the Supabase SQL Editor. All payroll and employee data is public
+-- and can be read, inserted, updated, or deleted without signing in.
+
+drop view if exists public.karyawan_direktori;
+drop trigger if exists on_auth_user_created on auth.users;
+
+do $$
+declare
+  policy_row record;
+begin
+  for policy_row in
+    select schemaname, tablename, policyname
+    from pg_policies
+    where schemaname = 'public'
+      and tablename in ('users', 'departemen', 'karyawan', 'penggajian')
+  loop
+    execute format('drop policy %I on %I.%I', policy_row.policyname, policy_row.schemaname, policy_row.tablename);
+  end loop;
+end;
+$$;
+
+drop function if exists public.handle_new_auth_user();
+drop function if exists public.current_app_role();
+drop function if exists public.delete_employee_with_payroll(uuid);
 
 create extension if not exists pgcrypto;
 
@@ -54,4 +74,22 @@ alter table public.departemen enable row level security;
 alter table public.karyawan enable row level security;
 alter table public.penggajian enable row level security;
 
-revoke all on public.users, public.departemen, public.karyawan, public.penggajian from public, anon, authenticated;
+drop policy if exists departemen_public_access on public.departemen;
+create policy departemen_public_access on public.departemen
+  for all to anon, authenticated
+  using (true) with check (true);
+
+drop policy if exists karyawan_public_access on public.karyawan;
+create policy karyawan_public_access on public.karyawan
+  for all to anon, authenticated
+  using (true) with check (true);
+
+drop policy if exists penggajian_public_access on public.penggajian;
+create policy penggajian_public_access on public.penggajian
+  for all to anon, authenticated
+  using (true) with check (true);
+
+revoke all on public.users from public, anon, authenticated;
+revoke all on public.departemen, public.karyawan, public.penggajian from public, anon, authenticated;
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on public.departemen, public.karyawan, public.penggajian to anon, authenticated;
