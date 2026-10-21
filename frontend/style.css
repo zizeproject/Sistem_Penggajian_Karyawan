@@ -99,6 +99,7 @@ td strong { color: var(--ink); font-size: 11px; font-weight: 600; }
 .icon-button:hover { border-color: var(--gold); color: var(--navy); }
 .icon-button.danger { color: var(--red); }
 .icon-button.danger:hover { border-color: #e8caca; background: #fff4f2; }
+.print-slip-button { min-height: 29px; padding: 0 9px; margin-left: 4px; font-size: 10px; white-space: nowrap; }
 .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 17px; }
 .search-wrap { position: relative; width: min(100%, 320px); }
 .search-wrap span { position: absolute; top: 10px; left: 12px; color: #9099a2; font-size: 15px; }

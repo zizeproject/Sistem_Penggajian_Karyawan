@@ -119,6 +119,85 @@ function periodName(value) {
   return new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" }).format(new Date(Number(year), Number(month) - 1));
 }
 
+function printPayrollSlip(recordId) {
+  const data = readData();
+  const record = data.payroll.find((item) => item.id === recordId);
+  if (!record) throw new Error("Catatan penggajian tidak ditemukan.");
+
+  const employee = data.employees.find((item) => item.id === record.id_karyawan);
+  const department = data.departments.find((item) => item.id === employee?.id_departemen)?.nama_departemen ?? "—";
+  const name = record.nama_karyawan || employee?.nama || "Karyawan tidak ditemukan";
+  const position = record.jabatan || employee?.jabatan || "—";
+  const popup = window.open("", "_blank", "width=850,height=700");
+  if (!popup) throw new Error("Pop-up diblokir browser. Izinkan pop-up untuk mencetak slip gaji.");
+
+  const slip = `<!doctype html>
+    <html lang="id">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Slip Gaji - ${safe(name)}</title>
+      <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 40px; color: #263342; font: 14px Arial, sans-serif; }
+        main { max-width: 760px; margin: 0 auto; }
+        header { padding-bottom: 20px; border-bottom: 3px solid #b49a69; text-align: center; }
+        header h1 { margin: 0 0 7px; color: #172538; font-size: 24px; letter-spacing: 2px; }
+        header p { margin: 0; color: #687482; font-size: 12px; letter-spacing: 1px; }
+        h2 { margin: 28px 0 16px; font-size: 17px; text-align: center; }
+        .details { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 30px; margin: 24px 0; }
+        .detail { padding-bottom: 8px; border-bottom: 1px solid #e4e7e9; }
+        .label { display: block; margin-bottom: 5px; color: #74808c; font-size: 11px; text-transform: uppercase; }
+        .value { font-weight: 600; }
+        table { width: 100%; margin-top: 18px; border-collapse: collapse; }
+        th, td { padding: 12px 14px; border: 1px solid #dfe3e6; text-align: left; }
+        th { background: #f5f3ee; color: #263342; }
+        td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+        .total td { border-top: 2px solid #b49a69; font-weight: 700; }
+        .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; margin-top: 60px; text-align: center; }
+        .signature { min-height: 100px; }
+        .signature p { margin: 0 0 75px; }
+        .signature strong { display: inline-block; min-width: 190px; padding-top: 8px; border-top: 1px solid #263342; }
+        @page { size: A4; margin: 18mm; }
+        @media print { body { padding: 0; } }
+        @media screen { body { background: #f2f3f4; } main { padding: 35px; background: #fff; box-shadow: 0 3px 18px #17253818; } }
+      </style>
+    </head>
+    <body>
+      <main>
+        <header><h1>VOGUEPAY RETAIL FASHION</h1><p>SLIP GAJI KARYAWAN</p></header>
+        <h2>Rincian Penggajian</h2>
+        <section class="details">
+          <div class="detail"><span class="label">Nama Karyawan</span><span class="value">${safe(name)}</span></div>
+          <div class="detail"><span class="label">Periode</span><span class="value">${safe(periodName(record.periode))}</span></div>
+          <div class="detail"><span class="label">Departemen</span><span class="value">${safe(department)}</span></div>
+          <div class="detail"><span class="label">Jabatan</span><span class="value">${safe(position)}</span></div>
+        </section>
+        <table>
+          <thead><tr><th>Komponen Gaji</th><th>Jumlah</th></tr></thead>
+          <tbody>
+            <tr><td>Gaji Pokok</td><td>${safe(money(record.gaji_pokok))}</td></tr>
+            <tr><td>Tunjangan</td><td>${safe(money(record.tunjangan))}</td></tr>
+            <tr><td>Potongan</td><td>− ${safe(money(record.potongan))}</td></tr>
+            <tr class="total"><td>Total Gaji Bersih (Take Home Pay)</td><td>${safe(money(record.total_gaji))}</td></tr>
+          </tbody>
+        </table>
+        <section class="signatures">
+          <div class="signature"><p>Karyawan</p><strong>${safe(name)}</strong></div>
+          <div class="signature"><p>Bagian Keuangan / HRD</p><strong>&nbsp;</strong></div>
+        </section>
+      </main>
+    </body>
+    </html>`;
+
+  popup.document.open();
+  popup.document.write(slip);
+  popup.document.close();
+  popup.opener = null;
+  popup.focus();
+  setTimeout(() => popup.print(), 250);
+}
+
 function errorRow(selector, colspan, error) {
   document.querySelector(selector).innerHTML = `<tr><td colspan="${colspan}" class="error-cell">${safe(error.message)}</td></tr>`;
 }
@@ -326,13 +405,23 @@ function loadPayroll() {
         <td><strong>${safe(record.nama_karyawan)}</strong><span class="sub-cell">${safe(record.jabatan)}</span></td>
         <td>${periodName(record.periode)}</td><td>${money(record.gaji_pokok)}</td><td>${money(record.tunjangan)}</td>
         <td>${money(record.potongan)}</td><td class="total-amount">${money(record.total_gaji)}</td>
-        <td class="actions" data-payroll-only><a class="icon-button" href="tambah-penggajian.html?id=${encodeURIComponent(record.id)}" title="Edit">↗</a>
+        <td class="actions" data-payroll-only><button class="button button-secondary print-slip-button" type="button" data-print-payroll="${safe(record.id)}">🖨️ Cetak Slip</button>
+        <a class="icon-button" href="tambah-penggajian.html?id=${encodeURIComponent(record.id)}" title="Edit">↗</a>
         <button class="icon-button danger" data-remove-payroll="${safe(record.id)}" title="Hapus">×</button></td></tr>`).join("")
         : '<tr><td colspan="7"><p class="empty-state">Belum ada penggajian pada periode ini.</p></td></tr>';
     } catch (error) { errorRow("#payroll-rows", 7, error); }
   };
   filter.addEventListener("change", render);
   body.addEventListener("click", async (event) => {
+    const printButton = event.target.closest("[data-print-payroll]");
+    if (printButton) {
+      try {
+        printPayrollSlip(printButton.dataset.printPayroll);
+      } catch (error) {
+        toast(error.message, true);
+      }
+      return;
+    }
     const button = event.target.closest("[data-remove-payroll]");
     if (!button || !confirm("Hapus catatan penggajian ini?")) return;
     try {
